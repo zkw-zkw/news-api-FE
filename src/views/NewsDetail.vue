@@ -58,7 +58,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useNewsStore } from '../store/modules/news'
 import { useHistoryStore } from '../store/modules/history'
@@ -75,6 +75,12 @@ const userStore = useUserStore()
 
 // 获取路由参数中的新闻ID
 const newsId = computed(() => Number(route.params.id))
+watch(() => route.params.id, (newId) => {
+  if (newId) {
+    window.scrollTo(0, 0)
+    newsStore.getNewsDetail(Number(newId))
+  }
+})
 
 // 将内容拆分为段落
 const contentParagraphs = computed(() => {
