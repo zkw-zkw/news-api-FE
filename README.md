@@ -76,7 +76,6 @@ npm run dev
 npm run build
 ```
 
-底部 Tab：🏠 首页 · 🤖 AI Agent · 👤 我的
 
 ---
 
