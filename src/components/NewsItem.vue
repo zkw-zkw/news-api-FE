@@ -1,5 +1,5 @@
 <template>
-  <div class="news-item" @click="goToDetail">
+  <div class="news-item" :class="{ 'grid-mode': grid }" @click="goToDetail">
     <div class="news-content">
       <h3 class="news-title">{{ news.title }}</h3>
       <p class="news-desc">{{ news.description }}</p>
@@ -23,6 +23,10 @@ const props = defineProps({
   news: {
     type: Object,
     required: true
+  },
+  grid: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -36,9 +40,11 @@ const goToDetail = () => {
 <style scoped>
 .news-item {
   display: flex;
-  padding: 12px 16px;
-  border-bottom: 1px solid #f2f2f2;
+  padding: 14px 16px;
+  margin: 0 12px 8px;
+  border-radius: 8px;
   background-color: #fff;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
 }
 
 .news-content {
@@ -50,7 +56,7 @@ const goToDetail = () => {
 .news-title {
   font-size: 16px;
   font-weight: 500;
-  margin: 0 0 8px;
+  margin: 0 0 6px;
   line-height: 1.4;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -60,9 +66,9 @@ const goToDetail = () => {
 }
 
 .news-desc {
-  font-size: 14px;
-  color: #666;
-  margin: 0 0 8px;
+  font-size: 13px;
+  color: #999;
+  margin: 0 0 6px;
   line-height: 1.4;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -91,6 +97,28 @@ const goToDetail = () => {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  border-radius: 4px;
+  border-radius: 6px;
+}
+
+.news-item.grid-mode {
+  flex-direction: column-reverse;
+  padding: 8px;
+  border-bottom: none;
+  border: 1px solid #f2f2f2;
+}
+
+.news-item.grid-mode .news-image {
+  width: 100%;
+  height: 100px;
+}
+
+.news-item.grid-mode .news-content {
+  margin-right: 0;
+  margin-top: 6px;
+}
+
+.news-item.grid-mode .news-title {
+  font-size: 14px;
+  margin-bottom: 4px;
 }
 </style>

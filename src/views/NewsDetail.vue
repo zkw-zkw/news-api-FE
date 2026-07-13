@@ -134,6 +134,7 @@ const toggleFavorite = async () => {
 
 // 组件挂载时获取新闻详情并添加到浏览历史
 onMounted(async () => {
+  window.scrollTo(0, 0)
   await newsStore.getNewsDetail(newsId.value)
   
   // 添加到浏览历史

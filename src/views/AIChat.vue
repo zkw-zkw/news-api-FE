@@ -1,9 +1,9 @@
 <template>
   <div class="ai-chat-container">
-    <van-nav-bar title="AI问答" fixed />
+    <van-nav-bar title="AI Agent" fixed />
     
     <div class="chat-content">
-      <div class="messages-container" ref="messagesContainer">
+      <div class="messages-container" ref="messagesContainer" @click="handleLinkClick">
         <div 
           v-for="(message, index) in messages" 
           :key="index" 
@@ -47,26 +47,47 @@
 
 <script setup>
 import { ref, onMounted, nextTick, watch } from 'vue';
+import { useRouter } from 'vue-router';
 import TabBar from '../components/TabBar.vue';
 import { showToast } from 'vant';
 import * as marked from 'marked';
 import DOMPurify from 'dompurify';
-import { aiChatConfig } from '../config/api';
+
 
 // 聊天消息
 const messages = ref([
   { role: 'assistant', content: '你好！我是AI助手，有什么可以帮助你的吗？' }
 ]);
+
+// 持久化对话记录
+watch(messages, (val) => {
+  sessionStorage.setItem('aiMessages', JSON.stringify(val))
+}, { deep: true })
+try {
+  const saved = sessionStorage.getItem('aiMessages')
+  if (saved) {
+    const parsed = JSON.parse(saved)
+    if (Array.isArray(parsed) && parsed.length > 0) {
+      messages.value = parsed
+    }
+  }
+} catch(e) {}
 const userInput = ref('');
 const messagesContainer = ref(null);
 const isLoading = ref(false);
 
 // 从配置文件获取API设置
-const apiEndpoint = ref(aiChatConfig.apiEndpoint);
-const apiKey = ref(aiChatConfig.apiKey);
-const model = ref(aiChatConfig.model);
 
 // 格式化消息内容（支持Markdown）
+const router = useRouter();
+const handleLinkClick = (e) => {
+  const link = e.target.closest("a");
+  if (link && link.getAttribute("href") && link.getAttribute("href").startsWith("/")) {
+    e.preventDefault();
+    router.push(link.getAttribute("href"));
+  }
+};
+
 const formatMessage = (content) => {
   if (!content) return '';
   // 使用marked解析Markdown，并用DOMPurify清理HTML
@@ -78,10 +99,7 @@ const sendMessage = async () => {
   if (!userInput.value.trim() || isLoading.value) return;
   
   // 检查API设置
-  if (!apiKey.value || apiKey.value === 'your-api-key-here') {
-    showToast('API Key未配置，请联系管理员');
-    return;
-  }
+
   
   // 添加用户消息
   const userMessage = userInput.value.trim();
@@ -112,75 +130,19 @@ const sendMessage = async () => {
 
 // 获取AI响应（使用SSE）
 const fetchAIResponse = async (userMessage) => {
-  const allMessages = messages.value
-    .slice(0, -1) // 排除最后一个空的assistant消息
-    .map(msg => ({ role: msg.role, content: msg.content }));
-  
   try {
-    const response = await fetch(apiEndpoint.value, {
+    const response = await fetch('/api/ai/chat', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey.value}`,
-        'X-DashScope-SSE': 'enable' // 添加阿里云DashScope所需的SSE头
-      },
-      body: JSON.stringify({
-        model: model.value,
-        messages: allMessages,
-        stream: true
-      })
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: userMessage, stream: false }),
     });
-    
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-      throw new Error(error.error?.message || `HTTP error! status: ${response.status}`);
+    const data = await response.json();
+    if (data.code === 200) {
+      messages.value[messages.value.length - 1].content = data.data.reply;
+    } else {
+      throw new Error(data.message || '请求失败');
     }
-    
-    // 处理SSE流
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-    let buffer = '';
-    let aiResponse = '';
-  
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    
-    buffer += decoder.decode(value, { stream: true });
-    const lines = buffer.split('\n');
-    buffer = lines.pop() || '';
-    
-    for (const line of lines) {
-      if (line.startsWith('data: ')) {
-        const data = line.slice(6);
-        if (data === '[DONE]') continue;
-        
-        try {
-          const json = JSON.parse(data);
-          // 适配阿里云DashScope的返回格式
-          const content = json.choices?.[0]?.delta?.content || 
-                         json.output?.text || 
-                         json.choices?.[0]?.message?.content || '';
-          if (content) {
-            aiResponse += content;
-            // 更新最后一条消息
-            messages.value[messages.value.length - 1].content = aiResponse;
-            await nextTick();
-            scrollToBottom();
-          }
-        } catch (e) {
-          console.error('Error parsing SSE data:', e);
-        }
-      }
-    }
-  }
-  
-  // 如果没有收到任何内容
-  if (!aiResponse) {
-    messages.value[messages.value.length - 1].content = '抱歉，我无法生成回复。请检查API设置或稍后再试。';
-  }
   } catch (error) {
-    console.error('Fetch error:', error);
     throw error;
   }
 };

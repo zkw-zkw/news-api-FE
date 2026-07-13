@@ -2,6 +2,13 @@ import { createRouter, createWebHistory } from 'vue-router'
 
 const routes = [
   {
+    path: '/search',
+    name: 'Search',
+    component: () => import('../views/Search.vue'),
+    meta: { title: '搜索', keepAlive: false }
+  },
+
+  {
     path: '/',
     redirect: '/home'
   },

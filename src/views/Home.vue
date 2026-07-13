@@ -1,22 +1,20 @@
 <template>
-  <div class="home">
+  <div class="home" :class="{ grid: layoutMode === 'grid' }">
     <van-nav-bar :title="$t('home.title')" fixed />
+    <div class="ni ni-l" @click="toggleLayout"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#333" stroke-width="2"><rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="3" width="8" height="8" rx="1"/><rect x="3" y="13" width="8" height="8" rx="1"/><rect x="13" y="13" width="8" height="8" rx="1"/></svg></div>
+    <div class="ni ni-r" onclick="window.searchClick()"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#333" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="21" y2="21" stroke-linecap="round"/></svg></div>
     
-    <!-- 更多选项独立div -->
-    <div class="more-options">
-      <div class="more-tab" @click="goToCategory">
-        {{ $t('home.more') }} <van-icon name="arrow" />
-      </div>
-    </div>
     
     <div class="category-tabs">
       <van-tabs v-model:active="activeTab" sticky swipeable animated>
         <van-tab 
           v-for="(category, index) in displayCategories" 
           :key="category.id" 
-          :title="getCategoryTranslation(category.name)"
           @click="newsStore.changeCategory(category.id)"
         >
+          <template #title>
+            <span style="margin-right:4px">{{ getCategoryIcon(category.name) }}</span>{{ getCategoryTranslation(category.name) }}
+          </template>
           <van-pull-refresh v-model="newsStore.refreshing" @refresh="onRefresh">
             <van-list
               v-model:loading="newsStore.loading"
@@ -24,7 +22,7 @@
               :finished-text="$t('home.noMore')"
               @load="onLoad"
             >
-              <news-item 
+              <news-item :grid="layoutMode === 'grid'" 
                 v-for="item in newsStore.newsList" 
                 :key="item.id" 
                 :news="item" 
@@ -49,6 +47,10 @@ import TabBar from '../components/TabBar.vue'
 
 const newsStore = useNewsStore()
 const router = useRouter()
+const searchClick = () => { window.location.href = '/search' }
+window.searchClick = searchClick
+const layoutMode = ref(localStorage.getItem('layout') || 'list')
+const toggleLayout = () => { layoutMode.value = layoutMode.value === 'list' ? 'grid' : 'list'; localStorage.setItem('layout', layoutMode.value) }
 const route = useRoute()
 const { t } = useI18n()
 const activeTab = ref(0)
@@ -80,6 +82,10 @@ onMounted(() => {
   newsStore.getCategories().then(() => {
     // 获取新闻列表
     newsStore.getNewsList()
+    if (newsStore.currentCategory && displayCategories.value?.length) {
+      const idx = displayCategories.value.findIndex(c => c.id === newsStore.currentCategory)
+      if (idx >= 0) activeTab.value = idx
+    }
   })
   
   // 初始化位置
@@ -95,16 +101,22 @@ const displayCategories = computed(() => {
   return newsStore.categories.filter(category => category.name !== '更多');
 })
 
-// 计算属性：更多下拉菜单中显示的分类（只显示军事、科技、财经分类）
-const moreCategories = computed(() => {
-  return newsStore.categories.filter(category => 
-    category.name === '军事' || 
-    category.name === '科技' || 
-    category.name === '财经'
-  );
-})
-
 // 获取分类名称的翻译
+const getCategoryIcon = (categoryName) => {
+  const iconMap = {
+    '头条': '📰',
+    '社会': '🌍',
+    '国内': '🇨🇳',
+    '国际': '🌐',
+    '娱乐': '🎬',
+    '体育': '⚽',
+    '军事': '⚔️',
+    '科技': '💻',
+    '财经': '💰'
+  };
+  return iconMap[categoryName] || '📋';
+};
+
 const getCategoryTranslation = (categoryName) => {
   const categoryMap = {
     '头条': 'headline',
@@ -124,32 +136,6 @@ const getCategoryTranslation = (categoryName) => {
 }
     
 
-// 跳转到分类页面
-const goToCategory = () => {
-  router.push('/category')
-}
-
-// 处理标签点击事件
-const handleTabClick = (index) => {
-  // 如果不是点击"更多"选项，则关闭下拉菜单
-  if (displayCategories.value[index].name !== '更多') {
-    showDropdown.value = false
-    newsStore.changeCategory(displayCategories.value[index].id)
-  }
-}
-
-// 选择更多分类中的某个分类
-const selectMoreCategory = (category) => {
-  showDropdown.value = false
-  newsStore.changeCategory(category.id)
-  
-  // 找到选中分类在原始分类中的索引
-  const index = newsStore.categories.findIndex(cat => cat.id === category.id)
-  if (index !== -1) {
-    // 直接设置activeTab为对应索引
-    activeTab.value = index
-  }
-}
 // 获取分类导航栏的位置并设置滚动监听
 const updateTabsPosition = () => {
   const tabsElement = document.querySelector('.van-tabs__wrap')
@@ -161,6 +147,7 @@ const updateTabsPosition = () => {
 // 滚动事件处理
 const handleScroll = () => {
   updateTabsPosition()
+
 }
 
 onMounted(() => {
@@ -194,16 +181,6 @@ const onLoad = () => {
   newsStore.getNewsList()
 }
 
-// 切换分类
-const changeCategory = (categoryId) => {
-  // 如果点击的是"更多"选项
-  if (categoryId === 10) {
-    goToCategory()
-    return
-  }
-  
-  newsStore.changeCategory(categoryId)
-}
 </script>
 
 <style scoped>
@@ -282,4 +259,9 @@ const changeCategory = (categoryId) => {
 .dropdown-item:hover {
   background-color: #f5f5f5;
 }
+.ni { position: fixed; top: 0; z-index: 100; width: 44px; height: 46px; display: flex; align-items: center; justify-content: center; cursor: pointer; background: rgba(255,255,255,.95); border-radius: 6px; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+.ni-r { left: calc(50% + 166px); }
+.ni-l { left: calc(50% - 210px); }
+.home.grid :deep(.van-list) { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+:deep(.van-nav-bar--fixed) { max-width: 420px !important; left: 50% !important; transform: translateX(-50%) !important; right: auto !important; }
 </style>
