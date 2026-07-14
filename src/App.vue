@@ -43,8 +43,8 @@ html, body {
 }
 
 /* constrain all fixed van-nav-bars and bottom tabbar */
-.van-nav-bar--fixed { max-width: 420px !important; left: 50% !important; transform: translateX(-50%) !important; right: auto !important; }
-.van-tabbar { max-width: 420px !important; left: 50% !important; transform: translateX(-50%) !important; }
+ .van-nav-bar--fixed { max-width: min(420px, 100vw) !important; left: 50% !important; transform: translateX(-50%) !important; right: auto !important; }
+ .van-tabbar { max-width: min(420px, 100vw) !important; left: 50% !important; transform: translateX(-50%) !important; }
 /* 移动端适配 */
 @media screen and (max-width: 450px) {
   html {

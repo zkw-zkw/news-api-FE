@@ -1,19 +1,19 @@
-<template>
-  <div class="news-item" :class="{ 'grid-mode': grid }" @click="goToDetail">
-    <div class="news-content">
-      <h3 class="news-title">{{ news.title }}</h3>
-      <p class="news-desc">{{ news.description }}</p>
-      <div class="news-info">
-        <span>{{ news.author }}</span>
-        <span>{{ news.publishTime }}</span>
-        <span>{{ news.views }} 阅读</span>
-      </div>
-    </div>
+ <template>
+   <div class="news-item" :class="{ 'grid-mode': grid }" @click="goToDetail">
     <div class="news-image">
       <img :src="news.image" :alt="news.title">
     </div>
-  </div>
-</template>
+     <div class="news-content">
+       <h3 class="news-title">{{ news.title }}</h3>
+       <p class="news-desc">{{ news.description }}</p>
+       <div class="news-info">
+         <span>{{ news.author }}</span>
+         <span>{{ news.publishTime }}</span>
+         <span>{{ news.views }} 阅读</span>
+       </div>
+     </div>
+   </div>
+ </template>
 
 <script setup>
 import { defineProps } from 'vue'
@@ -47,11 +47,11 @@ const goToDetail = () => {
   box-shadow: 0 1px 3px rgba(0,0,0,0.06);
 }
 
-.news-content {
-  flex: 1;
-  margin-right: 12px;
-  overflow: hidden;
-}
+ .news-content {
+   flex: 1;
+  margin-left: 12px;
+   overflow: hidden;
+ }
 
 .news-title {
   font-size: 16px;
@@ -100,12 +100,12 @@ const goToDetail = () => {
   border-radius: 6px;
 }
 
-.news-item.grid-mode {
-  flex-direction: column-reverse;
-  padding: 8px;
-  border-bottom: none;
-  border: 1px solid #f2f2f2;
-}
+ .news-item.grid-mode {
+  flex-direction: column;
+   padding: 8px;
+   border-bottom: none;
+   border: 1px solid #f2f2f2;
+ }
 
 .news-item.grid-mode .news-image {
   width: 100%;

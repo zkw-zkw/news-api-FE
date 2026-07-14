@@ -260,8 +260,8 @@ const onLoad = () => {
   background-color: #f5f5f5;
 }
 .ni { position: fixed; top: 0; z-index: 100; width: 44px; height: 46px; display: flex; align-items: center; justify-content: center; cursor: pointer; background: rgba(255,255,255,.95); border-radius: 6px; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
-.ni-r { left: calc(50% + 166px); }
-.ni-l { left: calc(50% - 210px); }
 .home.grid :deep(.van-list) { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
-:deep(.van-nav-bar--fixed) { max-width: 420px !important; left: 50% !important; transform: translateX(-50%) !important; right: auto !important; }
+ .ni-l { left: calc(50% - min(210px, 50vw)); }
+ .ni-r { left: calc(50% + min(210px, 50vw) - 44px); }
+ :deep(.van-nav-bar--fixed) { max-width: 420px !important; left: 50% !important; transform: translateX(-50%) !important; right: auto !important; }
 </style>
